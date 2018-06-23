@@ -695,10 +695,16 @@ namespace FlashDevelop.Dialogs
 
                     case 1:
                         // shortcut
+                        // sort by key name, then meta keys
                         {
-                            // sort by key name, then meta keys
-                            string lKeyCodeString = DataConverter.KeysToString(lhs.Custom & Keys.KeyCode);
-                            string rKeyCodeString = DataConverter.KeysToString(rhs.Custom & Keys.KeyCode);
+                            Keys lKeyCode = lhs.Custom & Keys.KeyCode;
+                            Keys rKeyCode = rhs.Custom & Keys.KeyCode;
+
+                            if (lKeyCode == Keys.None && rKeyCode != Keys.None) return -1;
+                            else if (lKeyCode != Keys.None && rKeyCode == Keys.None) return 1;
+
+                            string lKeyCodeString = DataConverter.KeysToString(lKeyCode);
+                            string rKeyCodeString = DataConverter.KeysToString(rKeyCode);
 
                             int keyCodeCompare = StringComparer.Ordinal.Compare(lKeyCodeString, rKeyCodeString);
                             if (keyCodeCompare != 0) return keyCodeCompare;
