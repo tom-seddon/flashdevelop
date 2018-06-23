@@ -31,6 +31,8 @@ namespace FlashDevelop.Dialogs
         private System.Windows.Forms.Button exportButton;
         private const char ViewConflictsKey = '?';
         private const char ViewCustomKey = '*';
+        private int sortColumn = 0;
+        private bool sortAscending = true;
 
         public ShortcutDialog()
         {
@@ -45,6 +47,10 @@ namespace FlashDevelop.Dialogs
             this.InitializeShortcutListItems();
             this.PopulateListView(string.Empty);
             this.ApplyScaling();
+
+            this.listView.ColumnClick += ListView_ColumnClick;
+
+            //Debug.WriteLine(string.Format("{0}", DataConverter.KeysToString(Keys.Control | Keys.Shift)));
         }
 
         #region Windows Form Designer Generated Code
@@ -66,7 +72,7 @@ namespace FlashDevelop.Dialogs
             this.importButton = new System.Windows.Forms.ButtonEx();
             this.exportButton = new System.Windows.Forms.ButtonEx();
             this.closeButton = new System.Windows.Forms.ButtonEx();
-            ((System.ComponentModel.ISupportInitialize)this.pictureBox).BeginInit();
+            ((System.ComponentModel.ISupportInitialize) this.pictureBox).BeginInit();
             this.SuspendLayout();
             // 
             // searchLabel
@@ -193,7 +199,7 @@ namespace FlashDevelop.Dialogs
             this.FormClosed += new FormClosedEventHandler(this.DialogClosed);
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            ((System.ComponentModel.ISupportInitialize)this.pictureBox).EndInit();
+            ((System.ComponentModel.ISupportInitialize) this.pictureBox).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -292,7 +298,8 @@ namespace FlashDevelop.Dialogs
             {
                 this.shortcutListItems[counter++] = new ShortcutListItem(item);
             }
-            Array.Sort(this.shortcutListItems, new ShorcutListItemComparer());
+
+            Array.Sort(this.shortcutListItems, new ShortcutListItemComparer(0, true));
             this.UpdateAllShortcutsConflicts();
         }
 
@@ -637,7 +644,7 @@ namespace FlashDevelop.Dialogs
         /// </summary>
         private void DialogClosed(object sender, FormClosedEventArgs e)
         {
-            for (int i = 0; i < this.shortcutListItems.Length; i++) this.shortcutListItems[i].ApplyChanges(); 
+            for (int i = 0; i < this.shortcutListItems.Length; i++) this.shortcutListItems[i].ApplyChanges();
             Globals.MainForm.ApplyAllSettings();
             ShortcutManager.SaveCustomShortcuts();
         }
@@ -660,14 +667,51 @@ namespace FlashDevelop.Dialogs
         /// <summary>
         /// Defines a method that compares two <see cref="ShortcutListItem"/> objects.
         /// </summary>
-        class ShorcutListItemComparer : IComparer<ShortcutListItem>
+        class ShortcutListItemComparer : IComparer<ShortcutListItem>
         {
+            private int column;
+            private bool ascending;
+
+            public ShortcutListItemComparer(int column, bool ascending)
+            {
+                this.column = column;
+                this.ascending = ascending;
+            }
+
             /// <summary>
             /// Compares two <see cref="ShortcutListItem"/> objects.
             /// </summary>
             int IComparer<ShortcutListItem>.Compare(ShortcutListItem x, ShortcutListItem y)
             {
-                return StringComparer.Ordinal.Compare(x.Text, y.Text);
+                ShortcutListItem lhs = ascending ? x : y;
+                ShortcutListItem rhs = ascending ? y : x;
+
+                switch (this.column)
+                {
+                    default:
+                    case 0:
+                        // command name
+                        return StringComparer.Ordinal.Compare(lhs.SubItems[0].Text, rhs.SubItems[0].Text);
+
+                    case 1:
+                        // shortcut
+                        {
+                            // sort by key name, then meta keys
+                            string lKeyCodeString = DataConverter.KeysToString(lhs.Custom & Keys.KeyCode);
+                            string rKeyCodeString = DataConverter.KeysToString(rhs.Custom & Keys.KeyCode);
+
+                            int keyCodeCompare = StringComparer.Ordinal.Compare(lKeyCodeString, rKeyCodeString);
+                            if (keyCodeCompare != 0) return keyCodeCompare;
+
+                            string lModifiersString = DataConverter.KeysToString(lhs.Custom & Keys.Modifiers);
+                            string rModifiersString = DataConverter.KeysToString(rhs.Custom & Keys.Modifiers);
+
+                            int modifiersCompare = StringComparer.Ordinal.Compare(lModifiersString, rModifiersString);
+                            if (modifiersCompare != 0) return modifiersCompare;
+
+                            return 0;
+                        }
+                }
             }
         }
 
@@ -789,6 +833,21 @@ namespace FlashDevelop.Dialogs
 
         #endregion
 
+        private void ListView_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == this.sortColumn)
+            {
+                this.sortAscending = !this.sortAscending;
+            }
+            else
+            {
+                this.sortColumn = e.Column;
+                this.sortAscending = true;
+            }
+
+            Array.Sort(this.shortcutListItems, new ShortcutListItemComparer(this.sortColumn, this.sortAscending));
+            this.PopulateListView(this.filterTextBox.Text);
+        }
     }
 
 }
