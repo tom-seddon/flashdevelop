@@ -417,7 +417,7 @@ class TabbedDocument : DockContent, ITabbedDocument
     public ScintillaControl SplitSci1 { get; }
     public ScintillaControl SplitSci2 { get; }
     public bool IsModified { get; set; }
-    public bool IsSplitted { get; set; }
+    public bool IsSplitted { get; }
     public bool IsBrowsable { get; }
     public bool IsUntitled { get; }
     public bool IsEditable { get; }

@@ -67,7 +67,7 @@ namespace PluginCore
         ScintillaControl SplitSci1 { get; }
         ScintillaControl SplitSci2 { get; }
         Boolean IsModified { get; set; }
-        Boolean IsSplitted { get; set; }
+        Boolean IsSplitted { get; }
         Boolean IsBrowsable { get; }
         Boolean IsUntitled { get; }
         Boolean IsEditable { get; }
@@ -80,6 +80,7 @@ namespace PluginCore
 
         void Close();
         void Activate();
+        void NextSplit();
         void RefreshTexts();
         void Reload(Boolean showQuestion);
         void Revert(Boolean showQuestion);

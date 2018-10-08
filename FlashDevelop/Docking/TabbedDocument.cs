@@ -30,9 +30,13 @@ namespace FlashDevelop.Docking
         private Boolean useCustomIcon;
         private Boolean isModified;
         private FileInfo fileInfo;
+        private int? verticalSplitterDistance;
+        private int? horizontalSplitterDistance;
 
         public TabbedDocument()
         {
+            this.verticalSplitterDistance = new int?();
+            this.horizontalSplitterDistance = new int?();
             this.focusTimer = new Timer();
             this.focusTimer.Interval = 100;
             this.bookmarks = new List<Int32>();
@@ -45,6 +49,7 @@ namespace FlashDevelop.Docking
             this.BackColor = Color.White;
             this.useCustomIcon = false;
             this.StartBackupTiming();
+
         }
 
         /// <summary>
@@ -98,13 +103,41 @@ namespace FlashDevelop.Docking
                 if (!this.IsEditable || this.splitContainer.Panel2Collapsed) return false;
                 else return true;
             }
-            set
+        }
+
+        /// <summary>
+        /// Select next split type.
+        /// </summary>
+        public void NextSplit()
+        {
+            if (this.IsEditable)
             {
-                if (this.IsEditable)
+                if (this.splitContainer.Panel2Collapsed)
                 {
-                    this.splitContainer.Panel2Collapsed = !value;
-                    if (value) this.splitContainer.Panel2.Show();
-                    else this.splitContainer.Panel2.Hide();
+                    // None -> Horizontal.
+
+                    this.splitContainer.Panel2Collapsed = false;
+                    this.splitContainer.Panel2.Show();
+
+                    this.splitContainer.Orientation = Orientation.Horizontal;
+                    this.splitContainer.SplitterDistance = this.horizontalSplitterDistance ?? this.SplitContainer.Height / 2;
+                }
+                else if (!this.splitContainer.Panel2Collapsed && this.splitContainer.Orientation == Orientation.Horizontal)
+                {
+                    // Horizontal -> Vertical.
+
+                    this.splitContainer.Orientation = Orientation.Vertical;
+                    this.horizontalSplitterDistance = this.splitContainer.SplitterDistance;
+                    this.splitContainer.SplitterDistance = this.verticalSplitterDistance ?? this.SplitContainer.Width / 2;
+                }
+                else if (!this.splitContainer.Panel2Collapsed && this.splitContainer.Orientation == Orientation.Vertical)
+                {
+                    // Vertical -> None.
+
+                    this.verticalSplitterDistance = this.splitContainer.SplitterDistance;
+
+                    this.splitContainer.Panel2Collapsed = true;
+                    this.splitContainer.Panel2.Hide();
                 }
             }
         }

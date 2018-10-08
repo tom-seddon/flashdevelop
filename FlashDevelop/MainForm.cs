@@ -3350,7 +3350,7 @@ namespace FlashDevelop
         {
             if (this.CurrentDocument.IsEditable)
             {
-                this.CurrentDocument.IsSplitted = !this.CurrentDocument.IsSplitted;
+                this.CurrentDocument.NextSplit();
                 ButtonManager.UpdateFlaggedButtons();
             }
         }
